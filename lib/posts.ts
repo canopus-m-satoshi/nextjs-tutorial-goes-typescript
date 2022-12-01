@@ -3,13 +3,14 @@ import path from 'path'
 import matter from 'gray-matter'
 import { remark } from 'remark'
 import html from 'remark-html'
+import { Post } from '../pages'
 
 const postsDirectory = path.join(process.cwd(), 'posts')
 
-export function getSortedPostsData() {
+export function getSortedPostsData(): Post[] {
   // Get file names under /posts
   const fileNames = fs.readdirSync(postsDirectory)
-  const allPostsData = fileNames.map(fileName => {
+  const allPostsData = fileNames.map((fileName) => {
     // Remove ".md" from file name to get id
     const id = fileName.replace(/\.md$/, '')
 
@@ -20,10 +21,19 @@ export function getSortedPostsData() {
     // Use gray-matter to parse the post metadata section
     const matterResult = matter(fileContents)
 
+    if (typeof matterResult.data.date !== 'string') {
+      throw Error('date must be string!')
+    }
+
+    if (typeof matterResult.data.title !== 'string') {
+      throw Error('title must be string!')
+    }
+
     // Combine the data with the id
     return {
       id,
-      ...matterResult.data
+      date: matterResult.data.date,
+      title: matterResult.data.title,
     }
   })
   // Sort posts by date
@@ -38,11 +48,11 @@ export function getSortedPostsData() {
 
 export function getAllPostIds() {
   const fileNames = fs.readdirSync(postsDirectory)
-  return fileNames.map(fileName => {
+  return fileNames.map((fileName) => {
     return {
       params: {
-        id: fileName.replace(/\.md$/, '')
-      }
+        id: fileName.replace(/\.md$/, ''),
+      },
     }
   })
 }
@@ -64,6 +74,6 @@ export async function getPostData(id) {
   return {
     id,
     contentHtml,
-    ...matterResult.data
+    ...matterResult.data,
   }
 }
